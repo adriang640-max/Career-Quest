@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Quest - Professional Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+        :root {
+            --bg-color: #fdfcf0;
+            --ink-color: #2d3436;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background-color: var(--bg-color);
+            color: var(--ink-color);
+            margin: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .paper-texture {
+            background-image: radial-gradient(#d1d1d1 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
+
+        .hand-drawn {
+            border: 3px solid var(--ink-color);
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            background: white;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            border: 2px solid var(--ink-color);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px) rotate(-1deg);
+            background: #f0f0f0;
+            box-shadow: 4px 4px 0px var(--ink-color);
+        }
+
+        .stress-red {
+            box-shadow: inset 0 0 100px rgba(255,0,0,0.2);
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        .hidden { display: none; }
+        
+        #mini-game-area {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .pulse {
+            animation: pulse-anim 1s infinite;
+        }
+
+        @keyframes pulse-anim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #hud {
+            pointer-events: none;
+        }
+        #hud > * {
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="paper-texture">
+
+    <!-- HUD -->
+    <div id="hud" class="fixed top-0 left-0 w-full p-2 flex justify-center items-start z-50 hidden">
+        <div class="absolute left-4 top-4 hand-drawn p-2 bg-white text-sm">
+            Score: <span id="success-value">0</span>
+        </div>
+
+        <div class="hand-drawn p-2 w-48 bg-white shadow-sm mt-2">
+            <div class="flex justify-between text-xs mb-1 font-bold">
+                <span>STRESS LEVEL</span>
+                <span id="stress-value">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 h-2 rounded border border-black overflow-hidden">
+                <div id="stress-bar" class="h-full bg-green-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <button id="btn-mute" class="absolute right-4 top-4 btn-action text-xs py-2 px-4">🔊 Sound</button>
+    </div>
+
+    <!-- SCREENS -->
+    <main class="h-screen flex items-center justify-center p-4">
+        
+        <!-- Start Screen -->
+        <section id="screen-start" class="text-center max-w-2xl">
+            <h1 class="text-7xl font-bold mb-4">CAREER QUEST</h1>
+            <p class="text-2xl mb-8">Can you manage the responsibilities of your future career?</p>
+            <div class="hand-drawn p-6 mb-8 text-left bg-white">
+                <h3 class="font-bold text-xl mb-2">Instructions:</h3>
+                <ul class="list-disc ml-6 space-y-2">
+                    <li>Select a career path and complete six professional tasks.</li>
+                    <li>Succeed in skill challenges to increase your score.</li>
+                    <li>Manage your stress level to avoid professional exhaustion.</li>
+                </ul>
+            </div>
+            <button onclick="showScreen('screen-select')" class="btn-action text-3xl font-bold px-16">START GAME</button>
+        </section>
+
+        <!-- Career Selection -->
+        <section id="screen-select" class="hidden text-center w-full max-w-5xl">
+            <h2 class="text-5xl mb-12">Select a Professional Path</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div onclick="initGame('surgeon')" class="hand-drawn p-8 cursor-pointer hover:bg-blue-50 transition-colors">
+                    <div class="text-7xl mb-4">🏥</div>
+                    <h3 class="text-3xl font-bold">Surgeon</h3>
+                    <p class="mt-4">Medical precision and patient care.</p>
+                </div>
+                <div onclick="initGame('chef')" class="hand-drawn p-8 cursor-pointer hover:bg-orange-50 transition-colors">
+                    <div class="text-7xl mb-4">🍳</div>
+                    <h3 class="text-3xl font-bold">Executive Chef</h3>
+                    <p class="mt-4">Culinary leadership and kitchen management.</p>
+                </div>
+                <div onclick="initGame('developer')" class="hand-drawn p-8 cursor-pointer hover:bg-green-50 transition-colors">
+                    <div class="text-7xl mb-4">💻</div>
+                    <h3 class="text-3xl font-bold">Software Engineer</h3>
+                    <p class="mt-4">Technology, logic, and systems development.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gameplay Screen -->
+        <section id="screen-game" class="hidden w-full max-w-4xl">
+            <div class="hand-drawn bg-white overflow-hidden flex flex-col min-h-[550px]">
+                <div id="game-visual" class="h-64 bg-gray-50 border-b-2 border-black flex items-center justify-center text-8xl relative">
+                    <span id="career-icon"></span>
+                    <div id="mini-game-overlay" class="absolute inset-0 bg-white hidden flex-col items-center justify-center p-4">
+                        <div id="mg-instruction" class="mb-4 text-2xl font-bold"></div>
+                        <div id="mini-game-area" class="w-full h-full"></div>
+                    </div>
+                </div>
+                <div class="p-8 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h4 id="step-count" class="text-sm font-mono uppercase mb-2 opacity-50">Task 1 of 6</h4>
+                        <p id="game-text" class="text-2xl mb-6"></p>
+                    </div>
+                    <div id="game-options" class="grid grid-cols-1 gap-2"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="screen-results" class="hidden text-center max-w-2xl">
+            <h2 id="res-title" class="text-6xl font-bold mb-4"></h2>
+            <p id="res-desc" class="text-2xl mb-8"></p>
+            <div id="res-stats" class="hand-drawn p-6 bg-white mb-8 text-xl"></div>
+            <button onclick="location.reload()" class="btn-action">RETURN TO MENU</button>
+        </section>
+
+    </main>
+
+    <script>
+        const CAREERS = {
+            surgeon: {
+                name: "Surgeon", icon: "🏥",
+                steps: [
+                    { type: 'story', text: "Morning Rounds: You have a long list of patients. A junior resident requests assistance with a diagnosis. How do you respond?", options: [
+                        { text: "Provide detailed instruction on the diagnostic process.", success: 15, stress: 5 },
+                        { text: "Briefly provide the answer to save time.", success: 5, stress: 15 }
+                    ]},
+                    { type: 'mini', id: 'precision', goal: "Surgical Precision: Tap when the indicator is in the green zone." },
+                    { type: 'story', text: "Critical Decision: A patient requires surgery, but the team is fatigued. How do you proceed?", options: [
+                        { text: "Request a relief team for patient safety.", success: 20, stress: 10 },
+                        { text: "Continue with the current team immediately.", success: 10, stress: 25 }
+                    ]},
+                    { type: 'mini', id: 'balancer', goal: "Vital Monitoring: Maintain the circle within the boundary." },
+                    { type: 'story', text: "Research Ethics: A company offers to fund your research study. How do you handle this?", options: [
+                        { text: "Decline to maintain professional independence.", success: 25, stress: 10 },
+                        { text: "Accept the funding to support medical progress.", success: 15, stress: 15 }
+                    ]},
+                    { type: 'mini', id: 'bugs', goal: "Laboratory Analysis: Collect 5 bacteria samples efficiently." }
+                ]
+            },
+            chef: {
+                name: "Chef", icon: "🍳",
+                steps: [
+                    { type: 'story', text: "Inventory Management: The fresh seafood delivery is delayed. What is your alternative plan?", options: [
+                        { text: "Create a new special using seasonal vegetables.", success: 10, stress: 10 },
+                        { text: "Contact the supplier to resolve the issue.", success: 5, stress: 20 }
+                    ]},
+                    { type: 'mini', id: 'memory', goal: "Recipe Accuracy: Remember the sequence of ingredients." },
+                    { type: 'story', text: "Team Management: Two staff members are in disagreement during a busy service. What is your approach?", options: [
+                        { text: "Assign them to different stations temporarily.", success: 15, stress: 20 },
+                        { text: "Mediate the conflict professionally while working.", success: 20, stress: 10 }
+                    ]},
+                    { type: 'mini', id: 'chopper', goal: "Kitchen Preparation: Process the vegetables carefully." },
+                    { type: 'story', text: "Customer Satisfaction: A guest requests a custom dish not found on your current menu.", options: [
+                        { text: "Accept the request to demonstrate culinary skill.", success: 25, stress: 20 },
+                        { text: "Politely decline and recommend a signature dish.", success: 10, stress: 10 }
+                    ]},
+                    { type: 'mini', id: 'match', goal: "Plating Presentation: Pair the correct sauce with the main course." }
+                ]
+            },
+            developer: {
+                name: "Developer", icon: "💻",
+                steps: [
+                    { type: 'story', text: "Code Quality: You identify a significant error in a colleague's work before a release.", options: [
+                        { text: "Communicate the issue clearly and offer assistance.", success: 15, stress: 10 },
+                        { text: "Correct the error independently without notice.", success: 5, stress: 15 }
+                    ]},
+                    { type: 'mini', id: 'bugs', goal: "System Debugging: Remove 5 software errors quickly." },
+                    { type: 'story', text: "Project Timeline: Management suggests reducing testing time to meet a deadline.", options: [
+                        { text: "Explain the importance of thorough testing for stability.", success: 20, stress: 5 },
+                        { text: "Proceed with the earlier release as requested.", success: 5, stress: 30 }
+                    ]},
+                    { type: 'mini', id: 'logic', goal: "Logic Verification: Determine the correct boolean output." },
+                    { type: 'story', text: "Professional Development: You have the opportunity to contribute to a community project.", options: [
+                        { text: "Participate to improve your technical skills.", success: 25, stress: 15 },
+                        { text: "Prioritize rest to maintain personal well-being.", success: 5, stress: -15 }
+                    ]},
+                    { type: 'mini', id: 'precision', goal: "Server Management: Deploy when the connection is stable." }
+                ]
+            }
+        };
+
+        let game = {
+            activeCareer: null,
+            currentStep: 0,
+            stress: 0,
+            success: 0,
+            muted: false
+        };
+
+        function showScreen(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function initGame(careerId) {
+            game.activeCareer = CAREERS[careerId];
+            game.currentStep = 0;
+            game.stress = 0;
+            game.success = 0;
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('career-icon').innerText = game.activeCareer.icon;
+            updateHUD();
+            showScreen('screen-game');
+            processStep();
+        }
+
+        function updateHUD() {
+            const bar = document.getElementById('stress-bar');
+            bar.style.width = Math.min(game.stress, 100) + '%';
+            document.getElementById('stress-value').innerText = Math.max(0, game.stress) + '%';
+            document.getElementById('success-value').innerText = game.success;
+
+            if (game.stress >= 70) {
+                bar.classList.add('bg-red-500');
+                document.body.classList.add('stress-red');
+            } else {
+                bar.classList.remove('bg-red-500');
+                document.body.classList.remove('stress-red');
+            }
+
+            if (game.stress >= 100) endGame('PROFESSIONAL BURNOUT', 'The workplace pressure exceeded your limits. Rest and recovery are required.');
+        }
+
+        function processStep() {
+            const step = game.activeCareer.steps[game.currentStep];
+            if (!step) return finalize();
+
+            document.getElementById('step-count').innerText = `Task ${game.currentStep + 1} of 6`;
+            document.getElementById('mini-game-overlay').classList.add('hidden');
+            const optionsDiv = document.getElementById('game-options');
+            optionsDiv.innerHTML = '';
+
+            if (step.type === 'story') {
+                document.getElementById('game-text').innerText = step.text;
+                step.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-action text-left';
+                    btn.innerText = opt.text;
+                    btn.onclick = () => {
+                        game.stress += opt.stress;
+                        game.success += opt.success;
+                        game.currentStep++;
+                        updateHUD();
+                        if (game.stress < 100) processStep();
+                    };
+                    optionsDiv.appendChild(btn);
+                });
+            } else if (step.type === 'mini') {
+                runMiniGame(step);
+            }
+        }
+
+        function runMiniGame(step) {
+            document.getElementById('game-text').innerText = "TECHNICAL CHALLENGE";
+            const overlay = document.getElementById('mini-game-overlay');
+            const area = document.getElementById('mini-game-area');
+            const inst = document.getElementById('mg-instruction');
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            inst.innerText = step.goal;
+            area.innerHTML = '';
+
+            if (step.id === 'precision') {
+                area.innerHTML = `
+                    <div class="w-full h-12 bg-gray-200 border-4 border-black relative rounded-lg top-1/2 -translate-y-1/2 overflow-hidden">
+                        <div class="absolute left-1/2 top-0 w-12 h-full bg-green-400 -ml-6 border-x-2 border-black"></div>
+                        <div id="pointer" class="absolute left-0 top-0 w-3 h-full bg-red-600"></div>
+                    </div>
+                    <button id="btn-hit" class="btn-action absolute bottom-4 left-1/2 -translate-x-1/2">CONFIRM</button>
+                `;
+                let pos = 0; let dir = 3;
+                const anim = setInterval(() => {
+                    pos += dir;
+                    if (pos >= 98 || pos <= 0) dir *= -1;
+                    const pointer = document.getElementById('pointer');
+                    if (pointer) pointer.style.left = pos + '%';
+                }, 16);
+
+                document.getElementById('btn-hit').onclick = () => {
+                    clearInterval(anim);
+                    const win = pos > 44 && pos < 56;
+                    resolveMini(win ? "Accurate" : "Missed", win);
+                };
+            } 
+            else if (step.id === 'bugs' || step.id === 'chopper') {
+                let caught = 0;
+                const emoji = step.id === 'bugs' ? '🪲' : '🥕';
+                const badEmoji = step.id === 'chopper' ? '🚫' : '⚠️';
+                
+                for(let i=0; i<6; i++) {
+                    const item = document.createElement('div');
+                    item.innerText = i === 5 ? badEmoji : emoji;
+                    item.className = 'absolute text-5xl cursor-pointer transition-all duration-700';
+                    item.style.left = Math.random() * 80 + '%';
+                    item.style.top = Math.random() * 80 + '%';
+                    item.onclick = () => {
+                        if(item.innerText === badEmoji) {
+                            resolveMini("Caution Required", false);
+                        } else {
+                            item.style.transform = 'scale(0)';
+                            caught++;
+                            if(caught === 5) resolveMini("Efficiency Improved", true);
+                        }
+                    };
+                    area.appendChild(item);
+                    const moveInterval = setInterval(() => {
+                        if (!area.contains(item)) { clearInterval(moveInterval); return; }
+                        item.style.left = Math.random() * 80 + '%';
+                        item.style.top = Math.random() * 80 + '%';
+                    }, 1000);
+                }
+            }
+            else if (step.id === 'memory') {
+                const items = ['🧂', '🔥', '💧', '🌿'];
+                inst.innerText = "Recall Sequence: " + items.join(' ');
+                setTimeout(() => {
+                    inst.innerText = "Identify the first item:";
+                    area.innerHTML = `<div class="flex gap-4 justify-center mt-20"></div>`;
+                    const flex = area.querySelector('div');
+                    items.sort(() => Math.random() - 0.5).forEach(e => {
+                        const b = document.createElement('button');
+                        b.className = 'text-6xl p-4 hand-drawn bg-white';
+                        b.innerText = e;
+                        b.onclick = () => resolveMini(e === '🧂' ? "Correct" : "Incorrect", e === '🧂');
+                        flex.appendChild(b);
+                    });
+                }, 2000);
+            }
+            else if (step.id === 'balancer') {
+                area.innerHTML = `
+                    <div class="w-48 h-48 border-4 border-black rounded-full mx-auto mt-4 relative">
+                        <div id="target" class="w-12 h-12 bg-blue-200 rounded-full absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                        <div id="ball" class="w-8 h-8 bg-red-500 rounded-full absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                    </div>
+                    <p class="mt-4 text-center">Click to stabilize the system.</p>
+                `;
+                let bPos = {x: 0, y: 0};
+                const ball = document.getElementById('ball');
+                const loop = setInterval(() => {
+                    bPos.x += (Math.random() - 0.5) * 12;
+                    bPos.y += (Math.random() - 0.5) * 12;
+                    if (ball) ball.style.transform = `translate(${bPos.x}px, ${bPos.y}px)`;
+                    if(Math.abs(bPos.x) > 85 || Math.abs(bPos.y) > 85) {
+                        clearInterval(loop);
+                        resolveMini("Unstable", false);
+                    }
+                }, 100);
+                area.onclick = () => { bPos.x *= 0.4; bPos.y *= 0.4; };
+                setTimeout(() => { 
+                    if(game.stress < 100 && overlay.classList.contains('flex')) { 
+                        clearInterval(loop); 
+                        resolveMini("Stabilized", true); 
+                    } 
+                }, 5000);
+            }
+            else if (step.id === 'logic') {
+                const q = Math.random() > 0.5;
+                const gate = q ? "NOT FALSE" : "TRUE AND FALSE";
+                const ans = q ? "TRUE" : "FALSE";
+                area.innerHTML = `
+                    <div class="text-4xl text-center mt-10">${gate} = ?</div>
+                    <div class="flex gap-4 justify-center mt-10">
+                        <button class="btn-action px-10" onclick="window.checkLogic('TRUE', '${ans}')">TRUE</button>
+                        <button class="btn-action px-10" onclick="window.checkLogic('FALSE', '${ans}')">FALSE</button>
+                    </div>
+                `;
+                window.checkLogic = (input, correct) => {
+                    resolveMini(input === correct ? "Logical Result" : "Incorrect Logic", input === correct);
+                };
+            }
+            else if (step.id === 'match') {
+                area.innerHTML = `
+                    <div class="flex flex-col items-center gap-6 mt-10">
+                        <div class="text-5xl">Ingredient Pairing: Steak 🥩</div>
+                        <div class="flex gap-4">
+                            <button class="btn-action" onclick="resolveMini('Excellent Choice', true)">Peppercorn 🪵</button>
+                            <button class="btn-action" onclick="resolveMini('Poor Pairing', false)">Chocolate 🍫</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function resolveMini(msg, success) {
+            const overlay = document.getElementById('mini-game-overlay');
+            overlay.innerHTML = `<h2 class="text-6xl font-bold pulse">${msg}</h2>`;
+            if (success) { game.success += 30; game.stress -= 5; }
+            else { game.stress += 20; }
+            updateHUD();
+            setTimeout(() => {
+                game.currentStep++;
+                overlay.innerHTML = `<div id="mg-instruction" class="mb-4 text-2xl font-bold"></div><div id="mini-game-area" class="w-full h-full"></div>`;
+                processStep();
+            }, 1800);
+        }
+
+        function finalize() {
+            let title, desc;
+            const highScore = game.success >= 120;
+            const midScore = game.success >= 70;
+
+            if (game.activeCareer.name === "Surgeon") {
+                if (highScore) { title = "ACCLAIMED SURGEON"; desc = "You demonstrated exceptional skill and contributed to medical innovation."; }
+                else if (midScore) { title = "DEDICATED PHYSICIAN"; desc = "You provided consistent care and maintained a reliable practice."; }
+                else { title = "MEDICAL PRACTITIONER"; desc = "You completed your duties, though the demands were significant."; }
+            } else if (game.activeCareer.name === "Chef") {
+                if (highScore) { title = "MASTER CHEF"; desc = "Your culinary leadership has earned international recognition."; }
+                else if (midScore) { title = "EXECUTIVE CHEF"; desc = "You managed a successful kitchen with professional standards."; }
+                else { title = "CULINARY PROFESSIONAL"; desc = "You successfully navigated a high-pressure kitchen environment."; }
+            } else {
+                if (highScore) { title = "PRINCIPAL ENGINEER"; desc = "You led major technical initiatives and improved core systems."; }
+                else if (midScore) { title = "SENIOR DEVELOPER"; desc = "Your technical contributions ensured reliable and efficient software."; }
+                else { title = "SOFTWARE DEVELOPER"; desc = "You delivered functional code despite complex technical challenges."; }
+            }
+            endGame(title, desc);
+        }
+
+        function endGame(title, desc) {
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('res-title').innerText = title;
+            document.getElementById('res-desc').innerText = desc;
+            document.getElementById('res-stats').innerText = `Final Score: ${game.success} | Final Stress Level: ${game.stress}%`;
+            showScreen('screen-results');
+        }
+
+        document.getElementById('btn-mute').onclick = function() {
+            game.muted = !game.muted;
+            this.innerText = game.muted ? '🔇 Sound Off' : '🔊 Sound On';
+        };
+    </script>
+</body>
+</html>
