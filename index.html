@@ -479,14 +479,27 @@
             }
             else if (step.id === 'memory') {
                 const items = ['🧂', '🔥', '💧', '🌿'];
-                inst.innerText = "Sequence: " + items.join(' ');
+                // Sequence Display
+                area.innerHTML = `
+                    <div class="flex flex-col items-center justify-center w-full h-full">
+                        <div id="sequence-display" class="flex gap-4">
+                            ${items.map(e => `<div class="text-6xl p-4 hand-drawn bg-white">${e}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
                 setTimeout(() => {
                     inst.innerText = "Which one was first?";
-                    area.innerHTML = `<div class="flex gap-4 justify-center mt-20"></div>`;
-                    const flex = area.querySelector('div');
-                    items.sort(() => Math.random() - 0.5).forEach(e => {
+                    area.innerHTML = `
+                        <div class="flex flex-col items-center justify-center w-full h-full">
+                            <div class="flex gap-4"></div>
+                        </div>
+                    `;
+                    const flex = area.querySelector('.flex.gap-4');
+                    // Shuffle for selection
+                    [...items].sort(() => Math.random() - 0.5).forEach(e => {
                         const b = document.createElement('button');
-                        b.className = 'text-6xl p-4 hand-drawn bg-white';
+                        b.className = 'text-6xl p-4 hand-drawn bg-white hover:bg-gray-100 transition-colors';
                         b.innerText = e;
                         b.onclick = () => resolveMini(e === '🧂' ? "Correct" : "Incorrect", e === '🧂');
                         flex.appendChild(b);
